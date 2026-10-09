@@ -1,0 +1,125 @@
+<% layout('layouts/main') %>
+<% const currentPage = 'penilaian' %>
+
+<div class="content-page">
+  <div class="container-fluid px-4">
+    <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+      <div>
+        <h4 class="mb-1"><i class="bi bi-graph-up-arrow me-2 text-primary"></i>Rekap Nilai Siswa</h4>
+        <p class="text-muted mb-0">Rata-rata nilai per mata pelajaran & ekspor ke Excel</p>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <% if (kelasId && mapelId && rekapData.length > 0) { %>
+        <a href="/penilaian/rekap/export?kelas_id=<%= kelasId %>&mapel_id=<%= mapelId %>" class="btn btn-success">
+          <i class="bi bi-file-earmark-excel me-1"></i>Export Rekap Excel
+        </a>
+        <% } %>
+        <a href="/penilaian" class="btn btn-outline-secondary">
+          <i class="bi bi-arrow-left me-1"></i>Kembali
+        </a>
+        <a href="/penilaian/input" class="btn btn-primary">
+          <i class="bi bi-pencil-square me-1"></i>Input Nilai
+        </a>
+      </div>
+    </div>
+
+    <div class="card-custom mb-4">
+      <div class="card-custom-body">
+        <form method="GET" action="/penilaian/rekap" class="row g-3 align-items-end">
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">Kelas <span class="text-danger">*</span></label>
+            <select class="form-select" name="kelas_id" required>
+              <option value="">-- Pilih Kelas --</option>
+              <% for (const k of kelasList) { %>
+              <option value="<%= k.id %>" <%= kelasId == k.id ? 'selected' : '' %>><%= k.nama_kelas %></option>
+              <% } %>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">Mata Pelajaran <span class="text-danger">*</span></label>
+            <select class="form-select" name="mapel_id" required>
+              <option value="">-- Pilih Mapel --</option>
+              <% for (const mp of mapelList) { %>
+              <option value="<%= mp.id %>" <%= mapelId == mp.id ? 'selected' : '' %>><%= mp.nama %></option>
+              <% } %>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <button type="submit" class="btn btn-primary w-100">
+              <i class="bi bi-search me-1"></i>Lihat Rekap
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <% if (kelasId && mapelId && rekapData.length > 0) { %>
+    <div class="card-custom">
+      <div class="card-custom-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+          <i class="bi bi-table me-2"></i>Rekap - <%= kelasList.find(k=>k.id==kelasId)?.nama_kelas %> | <%= mapelList.find(m=>m.id==mapelId)?.nama %>
+        </h5>
+        <a href="/penilaian/rekap/export?kelas_id=<%= kelasId %>&mapel_id=<%= mapelId %>" class="btn btn-sm btn-outline-success">
+          <i class="bi bi-download me-1"></i>Download Excel
+        </a>
+      </div>
+      <div class="card-custom-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th style="width: 50px;">No</th>
+                <th>NIS</th>
+                <th>Nama Siswa</th>
+                <th class="text-center">Jml. Penilaian</th>
+                <th class="text-center">Nilai Terendah</th>
+                <th class="text-center">Nilai Tertinggi</th>
+                <th class="text-center">Rata-Rata</th>
+                <th class="text-center">Predikat</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% for (let i = 0; i < rekapData.length; i++) { %>
+              <% const r = rekapData[i] %>
+              <% const rata = r.rata_rata ? parseFloat(r.rata_rata).toFixed(1) : '-' %>
+              <% let predikat = '-', predikatColor = 'secondary' %>
+              <% if (r.rata_rata) { %>
+                <% if (r.rata_rata >= 90) { predikat = 'A (Sangat Baik)'; predikatColor = 'success'; } %>
+                <% else if (r.rata_rata >= 80) { predikat = 'B (Baik)'; predikatColor = 'primary'; } %>
+                <% else if (r.rata_rata >= 70) { predikat = 'C (Cukup)'; predikatColor = 'info'; } %>
+                <% else if (r.rata_rata >= 60) { predikat = 'D (Perlu Bimbingan)'; predikatColor = 'warning'; } %>
+                <% else { predikat = 'E (Sangat Kurang)'; predikatColor = 'danger'; } %>
+              <% } %>
+              <tr>
+                <td><%= i + 1 %></td>
+                <td><code><%= r.nis %></code></td>
+                <td><strong><%= r.nama %></strong></td>
+                <td class="text-center"><span class="badge bg-secondary"><%= r.jumlah_penilaian || 0 %></span></td>
+                <td class="text-center"><%= r.nilai_min || '-' %></td>
+                <td class="text-center"><%= r.nilai_max_nilai || '-' %></td>
+                <td class="text-center">
+                  <strong class="fs-5 text-<%= r.rata_rata >= 70 ? 'success' : r.rata_rata >= 60 ? 'warning' : 'danger' %>">
+                    <%= rata %>
+                  </strong>
+                </td>
+                <td class="text-center">
+                  <span class="badge bg-<%= predikatColor %>"><%= predikat %></span>
+                </td>
+              </tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <% } else if (kelasId && mapelId) { %>
+    <div class="text-center py-5 text-muted">
+      <i class="bi bi-bar-chart-x fs-1 d-block mb-2"></i>Belum ada data penilaian untuk pilihan ini.
+    </div>
+    <% } else { %>
+    <div class="text-center py-5 text-muted">
+      <i class="bi bi-hand-index fs-1 d-block mb-2"></i>Pilih kelas dan mata pelajaran untuk melihat rekap.
+    </div>
+    <% } %>
+  </div>
+</div>

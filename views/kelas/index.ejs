@@ -1,0 +1,214 @@
+<% layout('layouts/main') %>
+<% const currentPage = 'kelas' %>
+
+<div class="content-page">
+  <div class="container-fluid px-3 px-md-4">
+    <div class="page-header d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3 mb-4">
+      <div>
+        <h4 class="fw-bold mb-1"><i class="bi bi-door-open-fill text-primary me-2"></i>Kelola Data Kelas</h4>
+        <p class="text-muted mb-0">Manajemen daftar kelas, tingkat, dan penugasan wali kelas</p>
+      </div>
+      <% if (user.role === 'admin') { %>
+      <button class="btn btn-primary fw-semibold" data-bs-toggle="modal" data-bs-target="#modalTambahKelas">
+        <i class="bi bi-plus-lg me-1"></i>Tambah Kelas
+      </button>
+      <% } %>
+    </div>
+
+    <!-- Tabel Daftar Kelas -->
+    <div class="card-custom">
+      <div class="card-custom-header d-flex align-items-center justify-content-between">
+        <h5 class="fw-bold mb-0"><i class="bi bi-list-ul me-2"></i>Daftar Kelas (<%= kelasList.length %>)</h5>
+      </div>
+      <div class="card-custom-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead>
+              <tr>
+                <th>Tingkat</th>
+                <th>Nama Kelas</th>
+                <th>Wali Kelas</th>
+                <th>Jumlah Siswa</th>
+                <th>Tahun Ajaran</th>
+                <th>Status</th>
+                <% if (user.role === 'admin') { %><th class="text-center">Aksi</th><% } %>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (kelasList.length === 0) { %>
+              <tr>
+                <td colspan="7" class="text-center py-4 text-muted">Belum ada data kelas</td>
+              </tr>
+              <% } %>
+              <% for (const k of kelasList) { %>
+              <tr>
+                <td><span class="badge bg-secondary">Tingkat <%= k.tingkat %></span></td>
+                <td><strong class="text-primary fs-6"><%= k.nama_kelas %></strong></td>
+                <td>
+                  <% if (k.nama_wali_kelas) { %>
+                    <span class="fw-semibold text-dark"><i class="bi bi-person-badge me-1 text-success"></i><%= k.nama_wali_kelas %></span>
+                  <% } else { %>
+                    <span class="text-muted fst-italic">Belum Ditentukan</span>
+                  <% } %>
+                </td>
+                <td>
+                  <span class="badge bg-info text-dark"><i class="bi bi-people-fill me-1"></i><%= k.total_siswa %> Siswa</span>
+                </td>
+                <td><span class="badge bg-light text-dark border"><%= k.tahun_ajaran %></span></td>
+                <td>
+                  <% if (k.aktif) { %>
+                    <span class="badge bg-success">Aktif</span>
+                  <% } else { %>
+                    <span class="badge bg-danger">Nonaktif</span>
+                  <% } %>
+                </td>
+                <% if (user.role === 'admin') { %>
+                <td class="text-center">
+                  <div class="d-flex justify-content-center gap-1">
+                    <button class="btn btn-sm btn-outline-primary" 
+                            onclick="editKelas(<%= JSON.stringify(k) %>)"
+                            title="Edit Kelas">
+                      <i class="bi bi-pencil-square"></i>
+                    </button>
+                    <form action="/kelas/<%= k.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Hapus kelas <%= k.nama_kelas %>?')">
+                      <button type="submit" class="btn btn-sm btn-outline-danger" title="Hapus Kelas">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </form>
+                  </div>
+                </td>
+                <% } %>
+              </tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<% if (user.role === 'admin') { %>
+<!-- Modal Tambah Kelas -->
+<div class="modal fade" id="modalTambahKelas" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title fw-bold"><i class="bi bi-plus-circle me-2"></i>Tambah Kelas Baru</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form action="/kelas" method="POST">
+        <div class="modal-body p-4">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Nama Kelas <span class="text-danger">*</span></label>
+            <input type="text" name="nama_kelas" class="form-control" placeholder="Contoh: Kelas 1A" required>
+          </div>
+          <div class="row g-3 mb-3">
+            <div class="col-6">
+              <label class="form-label fw-semibold">Tingkat (1-6) <span class="text-danger">*</span></label>
+              <select name="tingkat" class="form-select" required>
+                <option value="">Pilih</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+              </select>
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-semibold">Tahun Ajaran</label>
+              <input type="text" name="tahun_ajaran" class="form-control" value="2024/2025" required>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Wali Kelas</label>
+            <select name="wali_kelas_id" class="form-select">
+              <option value="">-- Belum Ada Wali Kelas --</option>
+              <% for (const g of guruList) { %>
+              <option value="<%= g.id %>"><%= g.nama %> (NIP: <%= g.nip || '-' %>)</option>
+              <% } %>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+          <button type="submit" class="btn btn-primary fw-bold"><i class="bi bi-save me-1"></i>Simpan Kelas</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Edit Kelas -->
+<div class="modal fade" id="modalEditKelas" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i>Edit Data Kelas</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="formEditKelas" method="POST">
+        <input type="hidden" name="_method" value="PUT">
+        <div class="modal-body p-4">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Nama Kelas <span class="text-danger">*</span></label>
+            <input type="text" id="editNamaKelas" name="nama_kelas" class="form-control" required>
+          </div>
+          <div class="row g-3 mb-3">
+            <div class="col-6">
+              <label class="form-label fw-semibold">Tingkat</label>
+              <select id="editTingkat" name="tingkat" class="form-select" required>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+              </select>
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-semibold">Tahun Ajaran</label>
+              <input type="text" id="editTahunAjaran" name="tahun_ajaran" class="form-control" required>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Wali Kelas</label>
+            <select id="editWaliKelasId" name="wali_kelas_id" class="form-select">
+              <option value="">-- Belum Ada Wali Kelas --</option>
+              <% for (const g of guruList) { %>
+              <option value="<%= g.id %>"><%= g.nama %></option>
+              <% } %>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Status</label>
+            <select id="editAktif" name="aktif" class="form-select">
+              <option value="1">Aktif</option>
+              <option value="0">Nonaktif</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+          <button type="submit" class="btn btn-primary fw-bold"><i class="bi bi-save me-1"></i>Simpan Perubahan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+function editKelas(kelas) {
+  document.getElementById('formEditKelas').action = '/kelas/' + kelas.id + '?_method=PUT';
+  document.getElementById('editNamaKelas').value = kelas.nama_kelas;
+  document.getElementById('editTingkat').value = kelas.tingkat;
+  document.getElementById('editTahunAjaran').value = kelas.tahun_ajaran;
+  document.getElementById('editWaliKelasId').value = kelas.wali_kelas_id || '';
+  document.getElementById('editAktif').value = kelas.aktif ? '1' : '0';
+
+  const modal = new bootstrap.Modal(document.getElementById('modalEditKelas'));
+  modal.show();
+}
+</script>
+<% } %>

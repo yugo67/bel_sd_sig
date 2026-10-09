@@ -1,0 +1,153 @@
+<% layout('layouts/main') %>
+<% const currentPage = 'penilaian' %>
+
+<div class="content-page">
+  <div class="container-fluid px-4">
+    <div class="page-header">
+      <div>
+        <h4><i class="bi bi-pencil-square me-2"></i>Input Penilaian Harian</h4>
+        <p class="text-muted mb-0">Masukkan nilai siswa per kelas</p>
+      </div>
+      <a href="/penilaian" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>Kembali
+      </a>
+    </div>
+
+    <!-- Filter untuk memilih kelas & mapel dulu -->
+    <div class="card-custom mb-4">
+      <div class="card-custom-header">
+        <h5><i class="bi bi-funnel me-2"></i>Pilih Kelas & Penilaian</h5>
+      </div>
+      <div class="card-custom-body">
+        <form method="GET" action="/penilaian/input" class="row g-3 align-items-end">
+          <div class="col-md-3">
+            <label class="form-label fw-semibold">Kelas <span class="text-danger">*</span></label>
+            <select class="form-select" name="kelas_id" required>
+              <option value="">-- Pilih Kelas --</option>
+              <% for (const k of kelasList) { %>
+              <option value="<%= k.id %>" <%= kelasId == k.id ? 'selected' : '' %>><%= k.nama_kelas %></option>
+              <% } %>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-semibold">Mata Pelajaran <span class="text-danger">*</span></label>
+            <select class="form-select" name="mapel_id" required>
+              <option value="">-- Pilih Mapel --</option>
+              <% for (const mp of mapelList) { %>
+              <option value="<%= mp.id %>" <%= mapelId == mp.id ? 'selected' : '' %>><%= mp.nama %></option>
+              <% } %>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label fw-semibold">Tanggal</label>
+            <input type="date" class="form-control" name="tanggal" value="<%= tanggal %>">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label fw-semibold">Jenis Penilaian</label>
+            <select class="form-select" name="jenis_penilaian">
+              <% for (const j of ['tugas','kuis','ulangan_harian','praktik','proyek']) { %>
+              <option value="<%= j %>" <%= jenisPenilaian === j ? 'selected' : '' %>><%= j.replace('_',' ').replace(/\b\w/g, c=>c.toUpperCase()) %></option>
+              <% } %>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label fw-semibold">Judul/Topik</label>
+            <input type="text" class="form-control" name="judul" value="<%= judul %>" placeholder="Nama tugas/tes">
+          </div>
+          <div class="col-12">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-people me-1"></i>Tampilkan Siswa
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <% if (siswaList.length > 0 && judul) { %>
+    <!-- Form Input Nilai -->
+    <div class="card-custom">
+      <div class="card-custom-header">
+        <div>
+          <h5><i class="bi bi-clipboard2-check me-2"></i>Input Nilai - <%= kelasList.find(k=>k.id==kelasId)?.nama_kelas %></h5>
+          <small class="text-muted"><%= mapelList.find(m=>m.id==mapelId)?.nama %> | <%= jenisPenilaian.replace('_',' ') %> | <%= judul %></small>
+        </div>
+        <div class="d-flex gap-2 align-items-center">
+          <label class="small fw-semibold mb-0">Isi semua:</label>
+          <input type="number" id="fillAllInput" class="form-control form-control-sm" style="width:80px" placeholder="Nilai">
+          <button type="button" class="btn btn-sm btn-outline-primary" onclick="fillAll()">Isi</button>
+        </div>
+      </div>
+      <div class="card-custom-body p-0">
+        <form action="/penilaian/input" method="POST">
+          <input type="hidden" name="kelas_id" value="<%= kelasId %>">
+          <input type="hidden" name="mata_pelajaran_id" value="<%= mapelId %>">
+          <input type="hidden" name="tanggal" value="<%= tanggal %>">
+          <input type="hidden" name="jenis_penilaian" value="<%= jenisPenilaian %>">
+          <input type="hidden" name="judul" value="<%= judul %>">
+          <input type="hidden" name="nilai_max" value="100">
+
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead>
+                <tr>
+                  <th>No</th>
+                  <th>NIS</th>
+                  <th>Nama Siswa</th>
+                  <th width="150">Nilai (0-100)</th>
+                  <th>Keterangan</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% for (let i = 0; i < siswaList.length; i++) { %>
+                <% const s = siswaList[i] %>
+                <% const existing = existingValues[s.id] %>
+                <tr>
+                  <td><%= i + 1 %></td>
+                  <td><code><%= s.nis %></code></td>
+                  <td><strong><%= s.nama %></strong></td>
+                  <td>
+                    <input type="number" class="form-control form-control-sm nilai-input"
+                           name="nilaiSiswa[<%= s.id %>][nilai]"
+                           min="0" max="100" step="0.5"
+                           value="<%= existing ? existing.nilai : '' %>"
+                           placeholder="0-100">
+                  </td>
+                  <td>
+                    <input type="text" class="form-control form-control-sm"
+                           name="nilaiSiswa[<%= s.id %>][catatan]"
+                           value="<%= existing ? (existing.catatan || '') : '' %>"
+                           placeholder="Ket. (opsional)">
+                  </td>
+                </tr>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="p-3 border-top">
+            <button type="submit" class="btn btn-success">
+              <i class="bi bi-save me-2"></i>Simpan Semua Nilai
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <% } else if (kelasId && mapelId && !judul) { %>
+    <div class="alert alert-info"><i class="bi bi-info-circle me-2"></i>Isi judul/topik penilaian untuk menampilkan daftar siswa.</div>
+    <% } else if (!kelasId || !mapelId) { %>
+    <div class="text-center py-5 text-muted">
+      <i class="bi bi-hand-index fs-1 d-block mb-2"></i>Pilih kelas, mata pelajaran, dan judul untuk mulai input nilai.
+    </div>
+    <% } %>
+  </div>
+</div>
+
+<script>
+function fillAll() {
+  const nilai = document.getElementById('fillAllInput').value;
+  if (!nilai) return;
+  document.querySelectorAll('.nilai-input').forEach(inp => {
+    if (!inp.value) inp.value = nilai;
+  });
+}
+</script>

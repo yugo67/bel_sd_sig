@@ -1,0 +1,100 @@
+<% layout('layouts/main') %>
+<% const currentPage = 'jurnal' %>
+
+<div class="content-page">
+  <div class="container-fluid px-4">
+    <div class="page-header">
+      <div>
+        <h4><%= jurnal ? 'Edit' : 'Tambah' %> Jurnal Pembelajaran</h4>
+      </div>
+      <a href="/jurnal" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>Kembali
+      </a>
+    </div>
+
+    <div class="row justify-content-center">
+      <div class="col-lg-9">
+        <div class="card-custom">
+          <div class="card-custom-header">
+            <h5><i class="bi bi-journal-plus me-2"></i><%= jurnal ? 'Edit' : 'Isi' %> Jurnal Pembelajaran</h5>
+          </div>
+          <div class="card-custom-body">
+            <form action="<%= action %>" method="<%= method %>">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold">Kelas <span class="text-danger">*</span></label>
+                  <select class="form-select" name="kelas_id" required>
+                    <option value="">-- Pilih Kelas --</option>
+                    <% for (const k of kelasList) { %>
+                    <option value="<%= k.id %>" <%= jurnal && jurnal.kelas_id == k.id ? 'selected' : '' %>><%= k.nama_kelas %></option>
+                    <% } %>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold">Mata Pelajaran</label>
+                  <select class="form-select" name="mata_pelajaran_id">
+                    <option value="">-- Pilih Mata Pelajaran --</option>
+                    <% for (const mp of mapelList) { %>
+                    <option value="<%= mp.id %>" <%= jurnal && jurnal.mata_pelajaran_id == mp.id ? 'selected' : '' %>><%= mp.nama %></option>
+                    <% } %>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold">Tanggal <span class="text-danger">*</span></label>
+                  <input type="date" class="form-control" name="tanggal" required
+                         value="<%= jurnal ? jurnal.tanggal.toISOString().split('T')[0] : new Date().toISOString().split('T')[0] %>">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold">Jam Ke <span class="text-danger">*</span></label>
+                  <select class="form-select" name="jam_ke" required>
+                    <% for (let j = 1; j <= 10; j++) { %>
+                    <option value="<%= j %>" <%= jurnal && jurnal.jam_ke == j ? 'selected' : '' %>>Jam Ke-<%= j %></option>
+                    <% } %>
+                  </select>
+                </div>
+                <div class="col-12">
+                  <label class="form-label fw-semibold">Materi <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" name="materi" required
+                         value="<%= jurnal ? jurnal.materi : '' %>" placeholder="Judul/topik materi pembelajaran">
+                </div>
+                <div class="col-12">
+                  <label class="form-label fw-semibold">Tujuan Pembelajaran</label>
+                  <textarea class="form-control" name="tujuan_pembelajaran" rows="2"
+                            placeholder="Tujuan yang ingin dicapai dari pembelajaran ini"><%= jurnal ? (jurnal.tujuan_pembelajaran || '') : '' %></textarea>
+                </div>
+                <div class="col-12">
+                  <label class="form-label fw-semibold">Kegiatan Pembelajaran</label>
+                  <textarea class="form-control" name="kegiatan_pembelajaran" rows="4"
+                            placeholder="Uraikan kegiatan pembelajaran (pembukaan, inti, penutup)"><%= jurnal ? (jurnal.kegiatan_pembelajaran || '') : '' %></textarea>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold">Media Pembelajaran</label>
+                  <input type="text" class="form-control" name="media_pembelajaran"
+                         value="<%= jurnal ? (jurnal.media_pembelajaran || '') : '' %>"
+                         placeholder="Contoh: Buku, LCD Proyektor, Video">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold">Metode Pembelajaran</label>
+                  <input type="text" class="form-control" name="metode_pembelajaran"
+                         value="<%= jurnal ? (jurnal.metode_pembelajaran || '') : '' %>"
+                         placeholder="Contoh: Ceramah, Diskusi, Praktik">
+                </div>
+                <div class="col-12">
+                  <label class="form-label fw-semibold">Catatan Tambahan</label>
+                  <textarea class="form-control" name="catatan" rows="2"
+                            placeholder="Catatan, kendala, atau hal penting lainnya"><%= jurnal ? (jurnal.catatan || '') : '' %></textarea>
+                </div>
+                <div class="col-12 pt-2">
+                  <button type="submit" class="btn btn-primary me-2">
+                    <i class="bi bi-save me-1"></i>Simpan Jurnal
+                  </button>
+                  <a href="/jurnal" class="btn btn-outline-secondary">Batal</a>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

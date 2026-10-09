@@ -1,0 +1,372 @@
+<% layout('layouts/main') %>
+<% const currentPage = 'jadwal-pelajaran' %>
+
+<div class="content-page">
+  <div class="container-fluid px-3 px-md-4">
+    <div class="page-header d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3 mb-4">
+      <div>
+        <h4 class="fw-bold mb-1"><i class="bi bi-calendar3 text-primary me-2"></i>Jadwal Pelajaran</h4>
+        <p class="text-muted mb-0">Kelola dan lihat alokasi jam mengajar guru per kelas</p>
+      </div>
+      <% if (user.role === 'admin') { %>
+      <div class="d-flex flex-wrap gap-2">
+        <a href="/jadwal-pelajaran/template" class="btn btn-outline-success fw-semibold">
+          <i class="bi bi-file-earmark-excel me-1"></i>Template Excel
+        </a>
+        <button class="btn btn-success fw-semibold" data-bs-toggle="modal" data-bs-target="#modalUploadJadwal">
+          <i class="bi bi-cloud-arrow-up me-1"></i>Upload Jadwal
+        </button>
+        <button class="btn btn-primary fw-semibold" data-bs-toggle="modal" data-bs-target="#modalTambahJadwal">
+          <i class="bi bi-plus-lg me-1"></i>Tambah Jadwal
+        </button>
+      </div>
+      <% } %>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="card-custom mb-4">
+      <div class="card-custom-body py-3">
+        <form action="/jadwal-pelajaran" method="GET" class="row g-2 align-items-center">
+          <div class="col-md-3">
+            <select name="kelas_id" class="form-select form-select-sm" onchange="this.form.submit()">
+              <option value="">-- Semua Kelas --</option>
+              <% for (const k of kelasList) { %>
+              <option value="<%= k.id %>" <%= filter.kelas_id == k.id ? 'selected' : '' %>><%= k.nama_kelas %></option>
+              <% } %>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <select name="guru_id" class="form-select form-select-sm" onchange="this.form.submit()">
+              <option value="">-- Semua Guru --</option>
+              <% for (const g of guruList) { %>
+              <option value="<%= g.id %>" <%= filter.guru_id == g.id ? 'selected' : '' %>><%= g.nama %></option>
+              <% } %>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <select name="hari" class="form-select form-select-sm" onchange="this.form.submit()">
+              <option value="">-- Semua Hari --</option>
+              <option value="senin" <%= filter.hari == 'senin' ? 'selected' : '' %>>Senin</option>
+              <option value="selasa" <%= filter.hari == 'selasa' ? 'selected' : '' %>>Selasa</option>
+              <option value="rabu" <%= filter.hari == 'rabu' ? 'selected' : '' %>>Rabu</option>
+              <option value="kamis" <%= filter.hari == 'kamis' ? 'selected' : '' %>>Kamis</option>
+              <option value="jumat" <%= filter.hari == 'jumat' ? 'selected' : '' %>>Jumat</option>
+              <option value="sabtu" <%= filter.hari == 'sabtu' ? 'selected' : '' %>>Sabtu</option>
+            </select>
+          </div>
+          <div class="col-md-3 d-flex gap-2">
+            <button type="submit" class="btn btn-sm btn-primary w-100 fw-semibold">
+              <i class="bi bi-funnel me-1"></i>Filter
+            </button>
+            <a href="/jadwal-pelajaran" class="btn btn-sm btn-outline-secondary">Reset</a>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Tampilan Jadwal Pelajaran -->
+    <div class="card-custom">
+      <div class="card-custom-header d-flex justify-content-between align-items-center">
+        <h5 class="fw-bold mb-0"><i class="bi bi-table me-2"></i>Daftar Jadwal Mengajar (<%= jadwalList.length %>)</h5>
+        <% if (user.role === 'admin' && jadwalList.length > 0) { %>
+        <span class="badge bg-primary px-3 py-2"><%= jadwalList.length %> Jam Aktif</span>
+        <% } %>
+      </div>
+      <div class="card-custom-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Hari</th>
+                <th>Jam</th>
+                <th>Kelas</th>
+                <th>Mata Pelajaran</th>
+                <th>Guru Pengampu</th>
+                <th>Ruangan</th>
+                <th>Status</th>
+                <% if (user.role === 'admin') { %><th class="text-center">Aksi</th><% } %>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (jadwalList.length === 0) { %>
+              <tr>
+                <td colspan="8" class="text-center py-5 text-muted">
+                  <i class="bi bi-calendar-x fs-1 d-block mb-2 text-secondary"></i>
+                  Belum ada jadwal pelajaran
+                </td>
+              </tr>
+              <% } %>
+              <% for (const j of jadwalList) { %>
+              <tr>
+                <td>
+                  <span class="badge bg-primary text-uppercase px-2 py-1"><%= j.hari %></span>
+                </td>
+                <td>
+                  <strong class="text-dark"><%= j.jam_mulai.slice(0,5) %> - <%= j.jam_selesai.slice(0,5) %></strong>
+                </td>
+                <td>
+                  <span class="badge bg-info text-dark"><%= j.nama_kelas %></span>
+                </td>
+                <td>
+                  <strong class="text-primary"><%= j.nama_mapel %></strong>
+                  <% if (j.kode_mapel) { %><small class="text-muted ms-1">(<%= j.kode_mapel %>)</small><% } %>
+                </td>
+                <td>
+                  <span class="fw-semibold text-dark"><i class="bi bi-person-fill me-1 text-secondary"></i><%= j.nama_guru %></span>
+                </td>
+                <td><small class="text-muted"><%= j.ruangan || '-' %></small></td>
+                <td>
+                  <% if (j.aktif) { %>
+                    <span class="badge bg-success-subtle text-success border border-success-subtle">Aktif</span>
+                  <% } else { %>
+                    <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">Nonaktif</span>
+                  <% } %>
+                </td>
+                <% if (user.role === 'admin') { %>
+                <td class="text-center">
+                  <div class="d-flex justify-content-center gap-1">
+                    <button class="btn btn-sm btn-outline-primary" onclick="editJadwal(<%= JSON.stringify(j) %>)" title="Edit Jadwal">
+                      <i class="bi bi-pencil-square"></i>
+                    </button>
+                    <form action="/jadwal-pelajaran/<%= j.id %>?_method=DELETE" method="POST" onsubmit="return confirm('Hapus jadwal ini?')">
+                      <button type="submit" class="btn btn-sm btn-outline-danger" title="Hapus Jadwal">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </form>
+                  </div>
+                </td>
+                <% } %>
+              </tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<% if (user.role === 'admin') { %>
+<!-- Modal Upload Jadwal -->
+<div class="modal fade" id="modalUploadJadwal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title fw-bold"><i class="bi bi-cloud-arrow-up me-2"></i>Upload Jadwal Pelajaran</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form action="/jadwal-pelajaran/upload" method="POST" enctype="multipart/form-data">
+        <div class="modal-body p-4">
+          <div class="alert alert-info py-2 px-3 small mb-3">
+            <i class="bi bi-info-circle me-1"></i>
+            Unggah file dalam format <strong>Excel (.xlsx, .xls)</strong> atau <strong>CSV</strong>. Data jadwal yang memiliki hari, jam, dan kelas yang sama akan otomatis diperbarui.
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Pilih File Jadwal <span class="text-danger">*</span></label>
+            <input type="file" name="file" class="form-control" accept=".xlsx,.xls,.csv" required>
+            <div class="form-text">Pastikan kolom sesuai: Hari, Jam Mulai, Jam Selesai, Kelas, Mata Pelajaran, Guru Pengampu, Ruangan.</div>
+          </div>
+          <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded border">
+            <div>
+              <div class="fw-semibold small"><i class="bi bi-file-earmark-excel text-success me-1"></i>Butuh contoh file?</div>
+              <div class="small text-muted">Unduh template yang sudah terisi data referensi sekolah</div>
+            </div>
+            <a href="/jadwal-pelajaran/template" class="btn btn-sm btn-outline-success fw-semibold">
+              <i class="bi bi-download me-1"></i>Template Excel
+            </a>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+          <button type="submit" class="btn btn-success fw-bold">
+            <i class="bi bi-upload me-1"></i>Upload & Proses
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Tambah Jadwal -->
+<div class="modal fade" id="modalTambahJadwal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title fw-bold"><i class="bi bi-plus-circle me-2"></i>Tambah Jadwal Pelajaran</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form action="/jadwal-pelajaran" method="POST">
+        <div class="modal-body p-4">
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Pilih Kelas <span class="text-danger">*</span></label>
+              <select name="kelas_id" class="form-select" required>
+                <option value="">-- Pilih Kelas --</option>
+                <% for (const k of kelasList) { %>
+                <option value="<%= k.id %>"><%= k.nama_kelas %></option>
+                <% } %>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Mata Pelajaran <span class="text-danger">*</span></label>
+              <select name="mata_pelajaran_id" class="form-select" required>
+                <option value="">-- Pilih Mapel --</option>
+                <% for (const m of mapelList) { %>
+                <option value="<%= m.id %>"><%= m.nama %> (<%= m.kode || '-' %>)</option>
+                <% } %>
+              </select>
+            </div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Guru Pengampu <span class="text-danger">*</span></label>
+              <select name="guru_id" class="form-select" required>
+                <option value="">-- Pilih Guru --</option>
+                <% for (const g of guruList) { %>
+                <option value="<%= g.id %>"><%= g.nama %></option>
+                <% } %>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Hari Mengajar <span class="text-danger">*</span></label>
+              <select name="hari" class="form-select" required>
+                <option value="senin">Senin</option>
+                <option value="selasa">Selasa</option>
+                <option value="rabu">Rabu</option>
+                <option value="kamis">Kamis</option>
+                <option value="jumat">Jumat</option>
+                <option value="sabtu">Sabtu</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Jam Mulai <span class="text-danger">*</span></label>
+              <input type="time" name="jam_mulai" class="form-control" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Jam Selesai <span class="text-danger">*</span></label>
+              <input type="time" name="jam_selesai" class="form-control" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Ruangan</label>
+              <input type="text" name="ruangan" class="form-control" placeholder="Contoh: R. 1A">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+          <button type="submit" class="btn btn-primary fw-bold"><i class="bi bi-save me-1"></i>Simpan Jadwal</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Edit Jadwal -->
+<div class="modal fade" id="modalEditJadwal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i>Edit Jadwal Pelajaran</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="formEditJadwal" method="POST">
+        <input type="hidden" name="_method" value="PUT">
+        <div class="modal-body p-4">
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Pilih Kelas <span class="text-danger">*</span></label>
+              <select id="editKelasId" name="kelas_id" class="form-select" required>
+                <% for (const k of kelasList) { %>
+                <option value="<%= k.id %>"><%= k.nama_kelas %></option>
+                <% } %>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Mata Pelajaran <span class="text-danger">*</span></label>
+              <select id="editMapelId" name="mata_pelajaran_id" class="form-select" required>
+                <% for (const m of mapelList) { %>
+                <option value="<%= m.id %>"><%= m.nama %> (<%= m.kode || '-' %>)</option>
+                <% } %>
+              </select>
+            </div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Guru Pengampu <span class="text-danger">*</span></label>
+              <select id="editGuruId" name="guru_id" class="form-select" required>
+                <% for (const g of guruList) { %>
+                <option value="<%= g.id %>"><%= g.nama %></option>
+                <% } %>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Hari Mengajar <span class="text-danger">*</span></label>
+              <select id="editHari" name="hari" class="form-select" required>
+                <option value="senin">Senin</option>
+                <option value="selasa">Selasa</option>
+                <option value="rabu">Rabu</option>
+                <option value="kamis">Kamis</option>
+                <option value="jumat">Jumat</option>
+                <option value="sabtu">Sabtu</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Jam Mulai <span class="text-danger">*</span></label>
+              <input type="time" id="editJamMulai" name="jam_mulai" class="form-control" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Jam Selesai <span class="text-danger">*</span></label>
+              <input type="time" id="editJamSelesai" name="jam_selesai" class="form-control" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Ruangan</label>
+              <input type="text" id="editRuangan" name="ruangan" class="form-control">
+            </div>
+          </div>
+
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Status Jadwal</label>
+              <select id="editAktif" name="aktif" class="form-select">
+                <option value="1">Aktif</option>
+                <option value="0">Nonaktif</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+          <button type="submit" class="btn btn-primary fw-bold"><i class="bi bi-save me-1"></i>Simpan Perubahan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+function editJadwal(j) {
+  document.getElementById('formEditJadwal').action = '/jadwal-pelajaran/' + j.id + '?_method=PUT';
+  document.getElementById('editKelasId').value = j.kelas_id;
+  document.getElementById('editMapelId').value = j.mata_pelajaran_id;
+  document.getElementById('editGuruId').value = j.guru_id;
+  document.getElementById('editHari').value = j.hari;
+  document.getElementById('editJamMulai').value = j.jam_mulai ? j.jam_mulai.slice(0, 5) : '';
+  document.getElementById('editJamSelesai').value = j.jam_selesai ? j.jam_selesai.slice(0, 5) : '';
+  document.getElementById('editRuangan').value = j.ruangan || '';
+  if (document.getElementById('editAktif')) {
+    document.getElementById('editAktif').value = j.aktif !== undefined ? String(j.aktif) : '1';
+  }
+
+  const modal = new bootstrap.Modal(document.getElementById('modalEditJadwal'));
+  modal.show();
+}
+</script>
+<% } %>

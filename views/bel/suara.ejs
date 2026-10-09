@@ -1,0 +1,152 @@
+<% layout('layouts/main') %>
+<% const currentPage = 'suara' %>
+
+<div class="content-page">
+  <div class="container-fluid px-4">
+    <div class="page-header">
+      <div>
+        <h4><i class="bi bi-music-note-beamed me-2 text-success"></i>Manajemen Suara Bel</h4>
+        <p class="text-muted mb-0">Upload dan kelola file audio untuk bel sekolah</p>
+      </div>
+      <a href="/bel" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>Kembali ke Jadwal
+      </a>
+    </div>
+
+    <div class="row g-4">
+      <!-- Form Upload -->
+      <% if (user.role === 'admin') { %>
+      <div class="col-lg-4">
+        <div class="card-custom">
+          <div class="card-custom-header">
+            <h5><i class="bi bi-cloud-upload me-2"></i>Upload Suara Bel</h5>
+          </div>
+          <div class="card-custom-body">
+            <form action="/bel/suara" method="POST" enctype="multipart/form-data">
+              <div class="mb-3">
+                <label class="form-label fw-semibold">Nama Suara <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" name="nama" required
+                       placeholder="Contoh: Lonceng Sekolah">
+              </div>
+              <div class="mb-3">
+                <label class="form-label fw-semibold">File Audio <span class="text-danger">*</span></label>
+                <input type="file" class="form-control" name="file_audio" accept="audio/*" required id="fileAudio">
+                <div class="form-text">Format: MP3, WAV, OGG, AAC. Maks 20MB.</div>
+              </div>
+
+              <!-- Preview sebelum upload -->
+              <div id="audioPreviewUpload" class="d-none mb-3">
+                <label class="form-label small fw-semibold">Preview:</label>
+                <audio id="previewUploadAudio" controls class="w-100"></audio>
+              </div>
+
+              <button type="submit" class="btn btn-success w-100">
+                <i class="bi bi-cloud-upload me-2"></i>Upload Suara
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+      <% } %>
+
+      <!-- Daftar Suara -->
+      <div class="col-lg-<%= user.role === 'admin' ? '8' : '12' %>">
+        <div class="card-custom">
+          <div class="card-custom-header">
+            <h5><i class="bi bi-collection-play me-2"></i>Daftar Suara Bel (<%= suaraBelList.length %>)</h5>
+          </div>
+          <div class="card-custom-body p-0">
+            <% if (suaraBelList.length === 0) { %>
+            <div class="text-center py-5 text-muted">
+              <i class="bi bi-music-note-list fs-1 d-block mb-2"></i>
+              Belum ada suara bel. Upload file audio untuk memulai.
+            </div>
+            <% } %>
+            <div class="p-3">
+              <div class="row g-3">
+                <% for (const sb of suaraBelList) { %>
+                <div class="col-md-6">
+                  <div class="suara-card">
+                    <div class="suara-icon">
+                      <i class="bi bi-file-music-fill"></i>
+                    </div>
+                    <div class="suara-info">
+                      <strong><%= sb.nama %></strong>
+                      <small class="text-muted d-block"><%= sb.filename %></small>
+                      <% if (sb.ukuran) { %>
+                      <small class="text-muted"><%= (sb.ukuran / 1024 / 1024).toFixed(2) %> MB</small>
+                      <% } %>
+                    </div>
+                    <div class="suara-actions">
+                      <button class="btn btn-sm btn-outline-success" onclick="playSuara('<%= sb.filepath %>', this)" title="Play">
+                        <i class="bi bi-play-fill"></i>
+                      </button>
+                      <% if (user.role === 'admin') { %>
+                      <form action="/bel/suara/<%= sb.id %>?_method=DELETE" method="POST"
+                            onsubmit="return confirm('Hapus suara ini? Jadwal yang menggunakan suara ini akan terpengaruh.')">
+                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Hapus">
+                          <i class="bi bi-trash"></i>
+                        </button>
+                      </form>
+                      <% } %>
+                    </div>
+                  </div>
+                  <audio id="audio_<%= sb.id %>" src="<%= sb.filepath %>" preload="none"></audio>
+                </div>
+                <% } %>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentPlayingAudio = null;
+let currentPlayBtn = null;
+
+function playSuara(filepath, btn) {
+  if (currentPlayingAudio && !currentPlayingAudio.paused) {
+    currentPlayingAudio.pause();
+    currentPlayingAudio.currentTime = 0;
+    if (currentPlayBtn) {
+      currentPlayBtn.innerHTML = '<i class="bi bi-play-fill"></i>';
+      currentPlayBtn.classList.replace('btn-success', 'btn-outline-success');
+    }
+    if (currentPlayingAudio.src.includes(filepath.replace('/uploads/suara/', ''))) {
+      currentPlayingAudio = null;
+      currentPlayBtn = null;
+      return;
+    }
+  }
+
+  const audio = new Audio(filepath);
+  currentPlayingAudio = audio;
+  currentPlayBtn = btn;
+  btn.innerHTML = '<i class="bi bi-stop-fill"></i>';
+  btn.classList.replace('btn-outline-success', 'btn-success');
+
+  audio.play();
+  audio.addEventListener('ended', () => {
+    btn.innerHTML = '<i class="bi bi-play-fill"></i>';
+    btn.classList.replace('btn-success', 'btn-outline-success');
+    currentPlayingAudio = null;
+    currentPlayBtn = null;
+  });
+}
+
+// Preview sebelum upload
+document.getElementById('fileAudio')?.addEventListener('change', function () {
+  const file = this.files[0];
+  const previewDiv = document.getElementById('audioPreviewUpload');
+  const previewAudio = document.getElementById('previewUploadAudio');
+  if (file) {
+    previewAudio.src = URL.createObjectURL(file);
+    previewDiv.classList.remove('d-none');
+  } else {
+    previewDiv.classList.add('d-none');
+  }
+});
+</script>

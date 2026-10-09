@@ -1,0 +1,109 @@
+<% layout('layouts/main') %>
+<% const currentPage = 'jurnal' %>
+
+<div class="content-page">
+  <div class="container-fluid px-4">
+    <div class="page-header">
+      <div>
+        <h4><i class="bi bi-journal-text me-2 text-purple"></i>Jurnal Pembelajaran</h4>
+        <p class="text-muted mb-0">Catatan kegiatan pembelajaran harian</p>
+      </div>
+      <a href="/jurnal/tambah" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-1"></i>Tambah Jurnal
+      </a>
+    </div>
+
+    <!-- Filter -->
+    <div class="card-custom mb-4">
+      <div class="card-custom-body">
+        <form method="GET" action="/jurnal" class="row g-3 align-items-end">
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">Kelas</label>
+            <select class="form-select" name="kelas_id">
+              <option value="">-- Semua Kelas --</option>
+              <% for (const k of kelasList) { %>
+              <option value="<%= k.id %>" <%= kelasId == k.id ? 'selected' : '' %>><%= k.nama_kelas %></option>
+              <% } %>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-semibold">Tanggal</label>
+            <input type="date" class="form-control" name="tanggal" value="<%= tanggal %>">
+          </div>
+          <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100">
+              <i class="bi bi-search me-1"></i>Filter
+            </button>
+          </div>
+          <div class="col-md-2">
+            <a href="/jurnal" class="btn btn-outline-secondary w-100">Reset</a>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Daftar Jurnal -->
+    <div class="card-custom">
+      <div class="card-custom-header">
+        <h5><i class="bi bi-list-ul me-2"></i>Daftar Jurnal (<%= jurnalList.length %>)</h5>
+      </div>
+      <div class="card-custom-body p-0">
+        <% if (jurnalList.length === 0) { %>
+        <div class="text-center py-5 text-muted">
+          <i class="bi bi-journal-x fs-1 d-block mb-2"></i>
+          Belum ada jurnal pembelajaran. <a href="/jurnal/tambah">Tambah jurnal baru</a>.
+        </div>
+        <% } else { %>
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead>
+              <tr>
+                <th>Tanggal</th>
+                <th>Kelas</th>
+                <th>Mata Pelajaran</th>
+                <th>Jam Ke</th>
+                <th>Materi</th>
+                <th>Guru</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% for (const j of jurnalList) { %>
+              <tr>
+                <td><%= new Date(j.tanggal).toLocaleDateString('id-ID', {day:'2-digit', month:'short', year:'numeric'}) %></td>
+                <td><span class="badge bg-primary"><%= j.nama_kelas %></span></td>
+                <td><%= j.nama_mapel || '-' %></td>
+                <td class="text-center"><span class="badge bg-secondary">Jam <%= j.jam_ke %></span></td>
+                <td>
+                  <strong><%= j.materi %></strong>
+                  <% if (j.metode_pembelajaran) { %>
+                  <br><small class="text-muted"><%= j.metode_pembelajaran %></small>
+                  <% } %>
+                </td>
+                <td><%= j.nama_guru %></td>
+                <td>
+                  <div class="d-flex gap-1">
+                    <a href="/jurnal/<%= j.id %>" class="btn btn-sm btn-outline-info" title="Detail">
+                      <i class="bi bi-eye"></i>
+                    </a>
+                    <a href="/jurnal/<%= j.id %>/edit" class="btn btn-sm btn-outline-primary" title="Edit">
+                      <i class="bi bi-pencil"></i>
+                    </a>
+                    <form action="/jurnal/<%= j.id %>?_method=DELETE" method="POST"
+                          onsubmit="return confirm('Hapus jurnal ini?')">
+                      <button type="submit" class="btn btn-sm btn-outline-danger" title="Hapus">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>

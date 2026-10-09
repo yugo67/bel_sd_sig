@@ -1,0 +1,127 @@
+<% layout('layouts/main') %>
+<% const currentPage = 'users' %>
+
+<div class="content-page">
+  <div class="container-fluid px-4">
+    <!-- Header -->
+    <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+      <div>
+        <h4 class="mb-1"><i class="bi bi-people-fill me-2 text-primary"></i>Manajemen User Guru & Admin</h4>
+        <p class="text-muted mb-0">Kelola akun pengguna, tambah guru, dan upload masal data guru</p>
+      </div>
+      <div class="d-flex gap-2 flex-wrap">
+        <a href="/users/template-guru" class="btn btn-outline-success">
+          <i class="bi bi-file-earmark-excel me-1"></i>Template CSV Guru
+        </a>
+        <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalUploadGuru">
+          <i class="bi bi-file-earmark-arrow-up me-1"></i>Upload Data Guru
+        </button>
+        <a href="/users/tambah" class="btn btn-primary">
+          <i class="bi bi-person-plus-fill me-1"></i>Tambah User Baru
+        </a>
+      </div>
+    </div>
+
+    <!-- Table Card -->
+    <div class="card-custom">
+      <div class="card-custom-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="bi bi-person-badge-fill me-2"></i>Daftar Pengguna (<%= users.length %>)</h5>
+      </div>
+      <div class="card-custom-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th style="width: 50px;">No</th>
+                <th>Nama Lengkap</th>
+                <th>Username</th>
+                <th>NIP</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th style="width: 100px;" class="text-center">Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (users.length === 0) { %>
+              <tr><td colspan="8" class="text-center py-4 text-muted">Tidak ada data pengguna</td></tr>
+              <% } %>
+              <% for (let i = 0; i < users.length; i++) { %>
+              <% const u = users[i] %>
+              <tr>
+                <td><%= i + 1 %></td>
+                <td><strong><%= u.nama %></strong></td>
+                <td><code><%= u.username %></code></td>
+                <td><%= u.nip || '-' %></td>
+                <td><%= u.email || '-' %></td>
+                <td>
+                  <span class="badge bg-<%= u.role === 'admin' ? 'danger' : 'info' %>">
+                    <i class="bi bi-<%= u.role === 'admin' ? 'shield-fill' : 'person-badge-fill' %> me-1"></i>
+                    <%= u.role.toUpperCase() %>
+                  </span>
+                </td>
+                <td>
+                  <% if (u.aktif) { %>
+                  <span class="badge bg-success">Aktif</span>
+                  <% } else { %>
+                  <span class="badge bg-secondary">Nonaktif</span>
+                  <% } %>
+                </td>
+                <td class="text-center">
+                  <div class="d-flex gap-1 justify-content-center">
+                    <a href="/users/<%= u.id %>/edit" class="btn btn-sm btn-outline-primary" title="Edit">
+                      <i class="bi bi-pencil"></i>
+                    </a>
+                    <% if (u.id !== user.id) { %>
+                    <form action="/users/<%= u.id %>?_method=DELETE" method="POST"
+                          onsubmit="return confirm('Hapus pengguna <%= u.nama %>?')">
+                      <button type="submit" class="btn btn-sm btn-outline-danger" title="Hapus">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </form>
+                    <% } %>
+                  </div>
+                </td>
+              </tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Upload Guru -->
+<div class="modal fade" id="modalUploadGuru" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form action="/users/upload-guru" method="POST" enctype="multipart/form-data">
+        <div class="modal-header bg-success text-white">
+          <h5 class="modal-title"><i class="bi bi-file-earmark-arrow-up me-2"></i>Upload File Data Guru (Excel/CSV)</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Pilih File (.csv, .xlsx, .xls) <span class="text-danger">*</span></label>
+            <input type="file" class="form-control" name="file" accept=".csv, .xlsx, .xls" required>
+            <div class="form-text mt-2">
+              <i class="bi bi-info-circle me-1"></i> Format kolom file harus memiliki header: 
+              <code>NIP, Nama, Username, Password, Email</code>
+            </div>
+          </div>
+          <div class="p-3 bg-light rounded border text-center">
+            <span class="text-muted d-block mb-2">Belum punya format file data guru?</span>
+            <a href="/users/template-guru" class="btn btn-sm btn-outline-success">
+              <i class="bi bi-download me-1"></i>Download Template CSV Guru
+            </a>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+          <button type="submit" class="btn btn-success"><i class="bi bi-upload me-1"></i>Mulai Upload</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

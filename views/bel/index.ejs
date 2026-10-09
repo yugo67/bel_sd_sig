@@ -1,0 +1,252 @@
+<% layout('layouts/main') %>
+<% const currentPage = 'bel' %>
+
+<div class="content-page">
+  <div class="container-fluid px-4">
+    <div class="page-header">
+      <div>
+        <h4><i class="bi bi-alarm-fill me-2 text-warning"></i>Manajemen Jadwal Bel</h4>
+        <p class="text-muted mb-0">Atur jadwal otomatis bel sekolah</p>
+      </div>
+      <% if (user.role === 'admin') { %>
+      <div class="d-flex flex-wrap gap-2">
+        <a href="/bel/template" class="btn btn-outline-success">
+          <i class="bi bi-file-earmark-excel me-1"></i>Template Excel
+        </a>
+        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalUploadJadwalBel">
+          <i class="bi bi-cloud-arrow-up me-1"></i>Upload Jadwal
+        </button>
+        <a href="/bel/suara" class="btn btn-outline-secondary">
+          <i class="bi bi-music-note-beamed me-1"></i>Suara Bel
+        </a>
+        <a href="/bel/jadwal/tambah" class="btn btn-primary">
+          <i class="bi bi-plus-lg me-1"></i>Tambah Jadwal
+        </a>
+      </div>
+      <% } %>
+    </div>
+
+    <div class="row g-4">
+      <!-- Jadwal Bel -->
+      <div class="col-lg-8">
+        <div class="card-custom">
+          <div class="card-custom-header">
+            <h5><i class="bi bi-list-check me-2"></i>Daftar Jadwal Bel</h5>
+          </div>
+          <div class="card-custom-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead>
+                  <tr>
+                    <th>Waktu</th>
+                    <th>Nama Jadwal</th>
+                    <th>Hari</th>
+                    <th>Suara</th>
+                    <th>Status</th>
+                    <% if (user.role === 'admin') { %><th>Aksi</th><% } %>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% if (jadwalBel.length === 0) { %>
+                  <tr>
+                    <td colspan="6" class="text-center py-4 text-muted">Belum ada jadwal bel</td>
+                  </tr>
+                  <% } %>
+                  <% for (const jadwal of jadwalBel) { %>
+                  <% const hariArr = typeof jadwal.hari === 'string' ? JSON.parse(jadwal.hari) : jadwal.hari %>
+                  <tr>
+                    <td><strong class="text-primary fs-5"><%= jadwal.waktu.slice(0,5) %></strong></td>
+                    <td>
+                      <strong><%= jadwal.nama %></strong>
+                      <% if (jadwal.keterangan) { %>
+                      <br><small class="text-muted"><%= jadwal.keterangan %></small>
+                      <% } %>
+                    </td>
+                    <td>
+                      <div class="d-flex flex-wrap gap-1">
+                        <% const hariShort = {senin:'Sen',selasa:'Sel',rabu:'Rab',kamis:'Kam',jumat:'Jum',sabtu:'Sab',minggu:'Min'} %>
+                        <% for (const h of hariArr) { %>
+                        <span class="badge bg-info text-dark"><%= hariShort[h] || h %></span>
+                        <% } %>
+                      </div>
+                    </td>
+                    <td>
+                      <% if (jadwal.nama_suara) { %>
+                        <span class="badge bg-success"><i class="bi bi-music-note me-1"></i><%= jadwal.nama_suara %></span>
+                        <button class="btn btn-sm btn-link p-0 ms-1" onclick="previewSuara('/uploads/suara/<%= jadwal.filename_suara %>')" title="Preview suara">
+                          <i class="bi bi-play-circle text-success"></i>
+                        </button>
+                      <% } else { %>
+                        <span class="text-muted small">Tidak ada</span>
+                      <% } %>
+                    </td>
+                    <td>
+                      <% if (jadwal.aktif) { %>
+                        <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Aktif</span>
+                      <% } else { %>
+                        <span class="badge bg-danger"><i class="bi bi-x-circle me-1"></i>Nonaktif</span>
+                      <% } %>
+                    </td>
+                    <% if (user.role === 'admin') { %>
+                    <td>
+                      <div class="d-flex gap-1">
+                        <a href="/bel/jadwal/<%= jadwal.id %>/edit" class="btn btn-sm btn-outline-primary">
+                          <i class="bi bi-pencil"></i>
+                        </a>
+                        <form action="/bel/jadwal/<%= jadwal.id %>?_method=DELETE" method="POST"
+                              onsubmit="return confirm('Hapus jadwal ini?')">
+                          <button type="submit" class="btn btn-sm btn-outline-danger">
+                            <i class="bi bi-trash"></i>
+                          </button>
+                        </form>
+                      </div>
+                    </td>
+                    <% } %>
+                  </tr>
+                  <% } %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sidebar kanan -->
+      <div class="col-lg-4">
+        <!-- Bel Manual -->
+        <div class="card-custom mb-4">
+          <div class="card-custom-header bg-warning">
+            <h5 class="text-dark"><i class="bi bi-bell-fill me-2"></i>Bel Manual</h5>
+          </div>
+          <div class="card-custom-body">
+            <p class="text-muted small mb-3">Bunyikan bel secara manual kapan saja</p>
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">Pilih Suara:</label>
+              <select class="form-select form-select-sm" id="manualBelSuaraInline">
+                <option value="">-- Tidak ada suara --</option>
+                <% for (const sb of suaraBelList) { %>
+                <option value="<%= sb.id %>" data-filename="<%= sb.filename %>"><%= sb.nama %></option>
+                <% } %>
+              </select>
+            </div>
+            <button class="btn btn-warning w-100 fw-bold" id="btnBelManualInline">
+              <i class="bi bi-bell-fill me-2"></i>Bunyikan Bel!
+            </button>
+          </div>
+        </div>
+
+        <!-- Log Bel Terbaru -->
+        <div class="card-custom">
+          <div class="card-custom-header">
+            <h5><i class="bi bi-clock-history me-2"></i>Log Bel Terbaru</h5>
+          </div>
+          <div class="card-custom-body p-0">
+            <% if (logBel.length === 0) { %>
+            <div class="text-center py-4 text-muted small">Belum ada log</div>
+            <% } %>
+            <ul class="log-list">
+              <% for (const log of logBel.slice(0, 8)) { %>
+              <li class="log-item">
+                <div class="log-icon <%= log.tipe === 'manual' ? 'manual' : 'auto' %>">
+                  <i class="bi bi-<%= log.tipe === 'manual' ? 'hand-index' : 'alarm' %>-fill"></i>
+                </div>
+                <div class="log-info">
+                  <strong class="small"><%= log.nama_jadwal %></strong>
+                  <small class="text-muted d-block"><%= new Date(log.waktu_bunyi).toLocaleString('id-ID') %></small>
+                  <% if (log.nama_user) { %>
+                  <small class="text-info"><%= log.nama_user %></small>
+                  <% } %>
+                </div>
+                <span class="badge bg-<%= log.tipe === 'manual' ? 'warning text-dark' : 'info' %> small"><%= log.tipe %></span>
+              </li>
+              <% } %>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<% if (user.role === 'admin') { %>
+<!-- Modal Upload Jadwal Bel -->
+<div class="modal fade" id="modalUploadJadwalBel" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title fw-bold"><i class="bi bi-cloud-arrow-up me-2"></i>Upload Jadwal Bel</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <form action="/bel/upload" method="POST" enctype="multipart/form-data">
+        <div class="modal-body p-4">
+          <div class="alert alert-info py-2 px-3 small mb-3">
+            <i class="bi bi-info-circle me-1"></i>
+            Unggah jadwal bel dalam format <strong>Excel (.xlsx, .xls)</strong> atau <strong>CSV</strong>.
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Pilih File Jadwal <span class="text-danger">*</span></label>
+            <input type="file" name="file" class="form-control" accept=".xlsx,.xls,.csv" required>
+            <div class="form-text">Kolom: Nama Jadwal, Waktu, Hari, Suara Bel, Keterangan, Status.</div>
+          </div>
+          <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded border">
+            <div>
+              <div class="fw-semibold small"><i class="bi bi-file-earmark-excel text-success me-1"></i>Contoh format?</div>
+              <div class="small text-muted">Unduh template Excel dengan daftar suara bel</div>
+            </div>
+            <a href="/bel/template" class="btn btn-sm btn-outline-success fw-semibold">
+              <i class="bi bi-download me-1"></i>Template Excel
+            </a>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+          <button type="submit" class="btn btn-success fw-bold">
+            <i class="bi bi-upload me-1"></i>Upload & Simpan
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<% } %>
+
+<audio id="previewAudioEl" preload="none"></audio>
+
+<script>
+// Preview suara
+function previewSuara(src) {
+  const audio = document.getElementById('previewAudioEl');
+  audio.src = src;
+  audio.play();
+}
+
+// Bel Manual Inline
+document.getElementById('btnBelManualInline').addEventListener('click', async function () {
+  const suaraId = document.getElementById('manualBelSuaraInline').value;
+  const suaraOption = document.getElementById('manualBelSuaraInline').selectedOptions[0];
+  const filename = suaraOption ? suaraOption.dataset.filename : '';
+
+  try {
+    const resp = await fetch('/dashboard/bel-manual', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ suara_bel_id: suaraId || null, keterangan: 'Bel manual dari halaman jadwal' }),
+    });
+    const data = await resp.json();
+    if (data.success) {
+      if (filename) {
+        const audio = document.getElementById('previewAudioEl');
+        audio.src = `/uploads/suara/${filename}`;
+        audio.play();
+      }
+      // Animasi tombol
+      this.textContent = '✅ Bel Berbunyi!';
+      setTimeout(() => {
+        this.innerHTML = '<i class="bi bi-bell-fill me-2"></i>Bunyikan Bel!';
+      }, 2000);
+    }
+  } catch (err) {
+    alert('Gagal membunyikan bel: ' + err.message);
+  }
+});
+</script>

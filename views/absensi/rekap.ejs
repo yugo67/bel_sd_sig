@@ -1,0 +1,111 @@
+<% layout('layouts/main') %>
+<% const currentPage = 'absensi' %>
+
+<div class="content-page">
+  <div class="container-fluid px-4">
+    <div class="page-header">
+      <div>
+        <h4><i class="bi bi-bar-chart-fill me-2 text-info"></i>Rekap Absensi Bulanan</h4>
+        <p class="text-muted mb-0">Ringkasan kehadiran siswa per bulan</p>
+      </div>
+      <a href="/absensi" class="btn btn-outline-primary">
+        <i class="bi bi-person-check me-1"></i>Input Absensi
+      </a>
+    </div>
+
+    <div class="card-custom mb-4">
+      <div class="card-custom-body">
+        <form method="GET" action="/absensi/rekap" class="row g-3 align-items-end">
+          <div class="col-md-5 col-lg-4">
+            <label class="form-label fw-semibold text-secondary small mb-1">
+              <i class="bi bi-building me-1 text-primary"></i>Pilih Kelas
+            </label>
+            <select class="form-select" name="kelas_id" onchange="this.form.submit()">
+              <option value="">-- Pilih Kelas --</option>
+              <% for (const k of kelasList) { %>
+              <option value="<%= k.id %>" <%= kelasId == k.id ? 'selected' : '' %>><%= k.nama_kelas %> (Tingkat <%= k.tingkat %>)</option>
+              <% } %>
+            </select>
+          </div>
+          <div class="col-md-4 col-lg-3">
+            <label class="form-label fw-semibold text-secondary small mb-1">
+              <i class="bi bi-calendar-month me-1 text-primary"></i>Bulan Rekap
+            </label>
+            <input type="month" class="form-control" name="bulan" value="<%= bulan %>" onchange="this.form.submit()">
+          </div>
+          <div class="col-md-3 col-lg-auto d-flex gap-2">
+            <button type="submit" class="btn btn-primary fw-semibold px-4 d-inline-flex align-items-center justify-content-center">
+              <i class="bi bi-search me-2"></i>Tampilkan
+            </button>
+            <% if (kelasId) { %>
+            <a href="/absensi/rekap" class="btn btn-outline-secondary d-inline-flex align-items-center" title="Reset Filter">
+              <i class="bi bi-arrow-counterclockwise"></i>
+            </a>
+            <% } %>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <% if (kelasId && rekapData.length > 0) { %>
+    <div class="card-custom">
+      <div class="card-custom-header">
+        <h5><i class="bi bi-table me-2"></i>Rekap Absensi - <%= kelasList.find(k => k.id == kelasId)?.nama_kelas %>
+          <span class="badge bg-secondary ms-2"><%= bulan %></span>
+        </h5>
+      </div>
+      <div class="card-custom-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead>
+              <tr>
+                <th>No</th>
+                <th>NIS</th>
+                <th>Nama Siswa</th>
+                <th class="text-center text-success">Hadir</th>
+                <th class="text-center text-warning">Sakit</th>
+                <th class="text-center text-info">Izin</th>
+                <th class="text-center text-danger">Alpha</th>
+                <th class="text-center">Total Hari</th>
+                <th class="text-center">% Kehadiran</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% for (let i = 0; i < rekapData.length; i++) { %>
+              <% const r = rekapData[i] %>
+              <% const pct = r.total > 0 ? ((r.hadir / r.total) * 100).toFixed(1) : 0 %>
+              <tr>
+                <td><%= i + 1 %></td>
+                <td><code><%= r.nis %></code></td>
+                <td><strong><%= r.nama %></strong></td>
+                <td class="text-center"><span class="badge bg-success"><%= r.hadir || 0 %></span></td>
+                <td class="text-center"><span class="badge bg-warning text-dark"><%= r.sakit || 0 %></span></td>
+                <td class="text-center"><span class="badge bg-info"><%= r.izin || 0 %></span></td>
+                <td class="text-center"><span class="badge bg-danger"><%= r.alpha || 0 %></span></td>
+                <td class="text-center"><%= r.total || 0 %></td>
+                <td class="text-center">
+                  <div class="progress" style="height:20px;min-width:80px">
+                    <div class="progress-bar bg-<%= pct >= 80 ? 'success' : pct >= 60 ? 'warning' : 'danger' %>"
+                         style="width:<%= pct %>%">
+                      <%= pct %>%
+                    </div>
+                  </div>
+                </td>
+              </tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <% } else if (kelasId) { %>
+    <div class="text-center py-5 text-muted">
+      <i class="bi bi-calendar-x fs-1 d-block mb-2"></i>Belum ada data absensi untuk periode ini.
+    </div>
+    <% } else { %>
+    <div class="text-center py-5 text-muted">
+      <i class="bi bi-hand-index fs-1 d-block mb-2"></i>Pilih kelas dan bulan untuk melihat rekap.
+    </div>
+    <% } %>
+  </div>
+</div>

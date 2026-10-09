@@ -1,0 +1,219 @@
+<% layout('layouts/main') %>
+<% const currentPage = 'dashboard' %>
+
+<div class="content-page">
+  <!-- Container Hero Dashboard -->
+  <div class="container-fluid px-3 px-md-4 mb-4">
+    <!-- Jam Digital Besar -->
+    <div class="clock-hero <%= jadwalBerikutnya ? 'has-next' : '' %>">
+      <div class="clock-display" id="clockHero">00:00:00</div>
+      <div class="clock-date" id="dateHero">Memuat...</div>
+      <div class="clock-hari" id="hariHero"></div>
+    </div>
+
+    <!-- Jadwal Bel Berikutnya -->
+    <% if (jadwalBerikutnya) { %>
+    <div class="alert-bel-next">
+      <div class="d-flex flex-column flex-sm-row align-items-start align-items-sm-center justify-content-between gap-3">
+        <div class="d-flex align-items-center gap-3">
+          <div class="bel-next-icon">
+            <i class="bi bi-alarm-fill"></i>
+          </div>
+          <div>
+            <div class="text-warning fw-bold small text-uppercase">Bel Berikutnya</div>
+            <div class="fw-bold fs-5 text-white"><%= jadwalBerikutnya.nama %></div>
+            <div class="text-white-50 small"><i class="bi bi-clock me-1"></i><%= jadwalBerikutnya.waktu.slice(0,5) %></div>
+          </div>
+        </div>
+        <div class="text-sm-end ms-auto ms-sm-0">
+          <div class="countdown-label small text-white-50">Hitung mundur</div>
+          <div class="countdown-display" id="countdownTimer" data-waktu="<%= jadwalBerikutnya.waktu %>">--:--</div>
+        </div>
+      </div>
+    </div>
+    <% } %>
+  </div>
+
+  <div class="container-fluid px-3 px-md-4">
+    <!-- Stats Cards -->
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-lg-3">
+        <div class="stat-card stat-blue">
+          <div class="stat-icon"><i class="bi bi-people-fill"></i></div>
+          <div class="stat-value"><%= stats.totalSiswa %></div>
+          <div class="stat-label">Total Siswa</div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="stat-card stat-green">
+          <div class="stat-icon"><i class="bi bi-person-badge-fill"></i></div>
+          <div class="stat-value"><%= stats.totalGuru %></div>
+          <div class="stat-label">Total Guru</div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="stat-card stat-purple">
+          <div class="stat-icon"><i class="bi bi-door-open-fill"></i></div>
+          <div class="stat-value"><%= stats.totalKelas %></div>
+          <div class="stat-label">Total Kelas</div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="stat-card stat-orange">
+          <div class="stat-icon"><i class="bi bi-alarm-fill"></i></div>
+          <div class="stat-value"><%= stats.totalJadwalBel %></div>
+          <div class="stat-label">Jadwal Bel Aktif</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-4">
+      <!-- Jadwal Bel Hari Ini -->
+      <div class="col-lg-7">
+        <div class="card-custom">
+          <div class="card-custom-header">
+            <h5><i class="bi bi-calendar2-check me-2"></i>Jadwal Bel Hari Ini
+              <span class="badge bg-secondary ms-2"><%= hariIni.charAt(0).toUpperCase() + hariIni.slice(1) %></span>
+            </h5>
+          </div>
+          <div class="card-custom-body p-0">
+            <% if (jadwalHariIni.length === 0) { %>
+            <div class="text-center py-5 text-muted">
+              <i class="bi bi-calendar-x fs-1 d-block mb-2"></i>
+              Tidak ada jadwal bel hari ini
+            </div>
+            <% } else { %>
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead>
+                  <tr>
+                    <th>Waktu</th>
+                    <th>Nama Jadwal</th>
+                    <th>Suara</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% const jamSekarang = new Date().toTimeString().slice(0, 8) %>
+                  <% for (const jadwal of jadwalHariIni) { %>
+                  <tr class="<%= jadwal.waktu < jamSekarang ? 'table-secondary' : (jadwal.waktu === (jadwalBerikutnya && jadwalBerikutnya.waktu) ? 'table-warning' : '') %>">
+                    <td><strong><%= jadwal.waktu.slice(0,5) %></strong></td>
+                    <td><%= jadwal.nama %></td>
+                    <td>
+                      <% if (jadwal.nama_suara) { %>
+                        <span class="badge bg-success"><i class="bi bi-music-note me-1"></i><%= jadwal.nama_suara %></span>
+                      <% } else { %>
+                        <span class="text-muted small">-</span>
+                      <% } %>
+                    </td>
+                    <td>
+                      <% if (jadwal.waktu < jamSekarang) { %>
+                        <span class="badge bg-secondary">Selesai</span>
+                      <% } else if (jadwalBerikutnya && jadwal.id === jadwalBerikutnya.id) { %>
+                        <span class="badge bg-warning text-dark">Berikutnya</span>
+                      <% } else { %>
+                        <span class="badge bg-light text-dark border">Menunggu</span>
+                      <% } %>
+                    </td>
+                  </tr>
+                  <% } %>
+                </tbody>
+              </table>
+            </div>
+            <% } %>
+          </div>
+        </div>
+      </div>
+
+      <!-- Kolom kanan -->
+      <div class="col-lg-5">
+        <!-- Absensi Hari Ini -->
+        <div class="card-custom mb-4">
+          <div class="card-custom-header">
+            <h5><i class="bi bi-person-check me-2"></i>Absensi Hari Ini</h5>
+          </div>
+          <div class="card-custom-body">
+            <div class="row g-2 text-center">
+              <div class="col-4">
+                <div class="absensi-mini hadir">
+                  <div class="absensi-mini-val"><%= absensiHariIni.totalHadir %></div>
+                  <div class="absensi-mini-label">Hadir</div>
+                </div>
+              </div>
+              <div class="col-4">
+                <div class="absensi-mini izin">
+                  <div class="absensi-mini-val"><%= absensiHariIni.totalIzinSakit %></div>
+                  <div class="absensi-mini-label">Izin/Sakit</div>
+                </div>
+              </div>
+              <div class="col-4">
+                <div class="absensi-mini alpha">
+                  <div class="absensi-mini-val"><%= absensiHariIni.totalAlpha %></div>
+                  <div class="absensi-mini-label">Alpha</div>
+                </div>
+              </div>
+            </div>
+            <a href="/absensi" class="btn btn-outline-primary btn-sm w-100 mt-3">
+              <i class="bi bi-arrow-right me-1"></i>Input Absensi
+            </a>
+          </div>
+        </div>
+
+        <!-- Log Bel Terbaru -->
+        <div class="card-custom">
+          <div class="card-custom-header">
+            <h5><i class="bi bi-clock-history me-2"></i>Log Bel Terbaru</h5>
+          </div>
+          <div class="card-custom-body p-0">
+            <% if (logBelTerbaru.length === 0) { %>
+            <div class="text-center py-4 text-muted small">Belum ada log bel</div>
+            <% } else { %>
+            <ul class="log-list">
+              <% for (const log of logBelTerbaru.slice(0, 6)) { %>
+              <li class="log-item">
+                <div class="log-icon <%= log.tipe === 'manual' ? 'manual' : 'auto' %>">
+                  <i class="bi bi-<%= log.tipe === 'manual' ? 'hand-index' : 'alarm' %>-fill"></i>
+                </div>
+                <div class="log-info">
+                  <strong><%= log.nama_jadwal %></strong>
+                  <small class="text-muted d-block"><%= new Date(log.waktu_bunyi).toLocaleString('id-ID') %></small>
+                </div>
+                <span class="badge bg-<%= log.tipe === 'manual' ? 'warning text-dark' : 'info' %>"><%= log.tipe %></span>
+              </li>
+              <% } %>
+            </ul>
+            <% } %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Countdown timer ke bel berikutnya
+(function() {
+  const el = document.getElementById('countdownTimer');
+  if (!el) return;
+  const waktu = el.dataset.waktu;
+  if (!waktu) return;
+
+  function updateCountdown() {
+    const now = new Date();
+    const [h, m, s] = waktu.split(':').map(Number);
+    const target = new Date();
+    target.setHours(h, m, s, 0);
+
+    const diff = target - now;
+    if (diff <= 0) {
+      el.textContent = 'Sekarang!';
+      return;
+    }
+    const mnt = Math.floor(diff / 60000);
+    const sec = Math.floor((diff % 60000) / 1000);
+    el.textContent = `${String(mnt).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+  }
+  updateCountdown();
+  setInterval(updateCountdown, 1000);
+})();
+</script>

@@ -1,0 +1,61 @@
+<% layout('layouts/auth') %>
+
+<h4 class="text-center fw-bold mb-1">Selamat Datang</h4>
+<p class="text-center text-muted mb-4 small">Masuk ke sistem bel sekolah</p>
+
+<form action="/auth/login" method="POST" novalidate>
+  <div class="mb-3">
+    <label for="username" class="form-label fw-semibold">Username</label>
+    <div class="input-group">
+      <span class="input-group-text"><i class="bi bi-person"></i></span>
+      <input type="text" class="form-control" id="username" name="username"
+             placeholder="Masukkan username" required autocomplete="username">
+    </div>
+  </div>
+  <div class="mb-4">
+    <label for="password" class="form-label fw-semibold">Password</label>
+    <div class="input-group">
+      <span class="input-group-text"><i class="bi bi-lock"></i></span>
+      <input type="password" class="form-control" id="password" name="password"
+             placeholder="Masukkan password" required autocomplete="current-password">
+      <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+        <i class="bi bi-eye" id="eyeIcon"></i>
+      </button>
+    </div>
+  </div>
+
+  <% if (errorMsg && errorMsg.length > 0) { %>
+  <div class="alert alert-danger py-2">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i><%= errorMsg[0] %>
+  </div>
+  <% } %>
+  <% if (successMsg && successMsg.length > 0) { %>
+  <div class="alert alert-success py-2">
+    <i class="bi bi-check-circle-fill me-2"></i><%= successMsg[0] %>
+  </div>
+  <% } %>
+
+  <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">
+    <i class="bi bi-box-arrow-in-right me-2"></i>Masuk
+  </button>
+</form>
+
+<div class="mt-3 p-3 rounded-3 bg-light small">
+  <strong>Demo Login:</strong><br>
+  Admin: <code>admin</code> / <code>admin123</code><br>
+  Guru: <code>guru</code> / <code>admin123</code>
+</div>
+
+<script>
+document.getElementById('togglePassword').addEventListener('click', function () {
+  const pwd = document.getElementById('password');
+  const icon = document.getElementById('eyeIcon');
+  if (pwd.type === 'password') {
+    pwd.type = 'text';
+    icon.className = 'bi bi-eye-slash';
+  } else {
+    pwd.type = 'password';
+    icon.className = 'bi bi-eye';
+  }
+});
+</script>

@@ -1,0 +1,81 @@
+<% layout('layouts/main') %>
+<% const currentPage = 'users' %>
+
+<div class="content-page">
+  <div class="container-fluid px-4">
+    <div class="page-header">
+      <div>
+        <h4><%= editUser ? 'Edit' : 'Tambah' %> Pengguna</h4>
+      </div>
+      <a href="/users" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>Kembali
+      </a>
+    </div>
+
+    <div class="row justify-content-center">
+      <div class="col-lg-6">
+        <div class="card-custom">
+          <div class="card-custom-header">
+            <h5><i class="bi bi-person-gear me-2"></i><%= editUser ? 'Edit' : 'Tambah' %> Pengguna</h5>
+          </div>
+          <div class="card-custom-body">
+            <form action="<%= action %>" method="<%= method %>">
+              <div class="row g-3">
+                <div class="col-12">
+                  <label class="form-label fw-semibold">Nama Lengkap <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" name="nama" required
+                         value="<%= editUser ? editUser.nama : '' %>" placeholder="Nama lengkap">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold">Username <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" name="username" required
+                         value="<%= editUser ? editUser.username : '' %>" placeholder="username">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold">
+                    Password <%= editUser ? '(kosongkan jika tidak diubah)' : '' %>
+                    <% if (!editUser) { %><span class="text-danger">*</span><% } %>
+                  </label>
+                  <input type="password" class="form-control" name="password"
+                         <%= !editUser ? 'required' : '' %> placeholder="Password">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold">Role <span class="text-danger">*</span></label>
+                  <select class="form-select" name="role" required>
+                    <option value="guru" <%= editUser && editUser.role === 'guru' ? 'selected' : '' %>>Guru</option>
+                    <option value="admin" <%= editUser && editUser.role === 'admin' ? 'selected' : '' %>>Admin</option>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold">NIP</label>
+                  <input type="text" class="form-control" name="nip"
+                         value="<%= editUser ? (editUser.nip || '') : '' %>" placeholder="NIP (opsional)">
+                </div>
+                <div class="col-12">
+                  <label class="form-label fw-semibold">Email</label>
+                  <input type="email" class="form-control" name="email"
+                         value="<%= editUser ? (editUser.email || '') : '' %>" placeholder="Email (opsional)">
+                </div>
+                <% if (editUser) { %>
+                <div class="col-12">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" name="aktif" id="aktifSwitch"
+                           <%= editUser.aktif ? 'checked' : '' %>>
+                    <label class="form-check-label fw-semibold" for="aktifSwitch">Akun Aktif</label>
+                  </div>
+                </div>
+                <% } %>
+                <div class="col-12 pt-2">
+                  <button type="submit" class="btn btn-primary me-2">
+                    <i class="bi bi-save me-1"></i>Simpan
+                  </button>
+                  <a href="/users" class="btn btn-outline-secondary">Batal</a>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

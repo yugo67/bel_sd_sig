@@ -1,0 +1,112 @@
+<% layout('layouts/main') %>
+<% const currentPage = 'bel' %>
+
+<div class="content-page">
+  <div class="container-fluid px-4">
+    <div class="page-header">
+      <div>
+        <h4><%= jadwal ? 'Edit' : 'Tambah' %> Jadwal Bel</h4>
+        <p class="text-muted mb-0">Atur waktu dan hari bel sekolah</p>
+      </div>
+      <a href="/bel" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>Kembali
+      </a>
+    </div>
+
+    <div class="row justify-content-center">
+      <div class="col-lg-7">
+        <div class="card-custom">
+          <div class="card-custom-header">
+            <h5><i class="bi bi-alarm me-2"></i><%= jadwal ? 'Edit' : 'Tambah' %> Jadwal Bel</h5>
+          </div>
+          <div class="card-custom-body">
+            <form action="<%= action %>" method="<%= method %>">
+              <div class="row g-3">
+                <div class="col-md-8">
+                  <label class="form-label fw-semibold">Nama Jadwal <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" name="nama" required
+                         value="<%= jadwal ? jadwal.nama : '' %>" placeholder="Contoh: Masuk Sekolah">
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label fw-semibold">Waktu <span class="text-danger">*</span></label>
+                  <input type="time" class="form-control" name="waktu" required
+                         value="<%= jadwal ? jadwal.waktu.slice(0,5) : '' %>">
+                </div>
+
+                <div class="col-12">
+                  <label class="form-label fw-semibold">Hari Aktif <span class="text-danger">*</span></label>
+                  <div class="d-flex flex-wrap gap-2 mt-1">
+                    <% const hariOptions = ['senin','selasa','rabu','kamis','jumat','sabtu','minggu'] %>
+                    <% const selectedHari = jadwal ? (typeof jadwal.hari === 'string' ? JSON.parse(jadwal.hari) : jadwal.hari) : [] %>
+                    <% for (const hari of hariOptions) { %>
+                    <div class="form-check form-check-inline hari-check">
+                      <input class="form-check-input" type="checkbox" name="hari" value="<%= hari %>"
+                             id="hari_<%= hari %>" <%= selectedHari.includes(hari) ? 'checked' : '' %>>
+                      <label class="form-check-label" for="hari_<%= hari %>">
+                        <%= hari.charAt(0).toUpperCase() + hari.slice(1) %>
+                      </label>
+                    </div>
+                    <% } %>
+                  </div>
+                  <div class="mt-1">
+                    <button type="button" class="btn btn-sm btn-outline-secondary me-1" onclick="selectHari(['senin','selasa','rabu','kamis','jumat'])">Sen-Jum</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary me-1" onclick="selectHari(['senin','selasa','rabu','kamis','jumat','sabtu'])">Sen-Sab</button>
+                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="selectHari([])">Hapus Semua</button>
+                  </div>
+                </div>
+
+                <div class="col-12">
+                  <label class="form-label fw-semibold">Suara Bel</label>
+                  <select class="form-select" name="suara_bel_id" id="suaraBelSelect">
+                    <option value="">-- Tidak ada suara --</option>
+                    <% for (const sb of suaraBelList) { %>
+                    <option value="<%= sb.id %>" <%= jadwal && jadwal.suara_bel_id == sb.id ? 'selected' : '' %>>
+                      <%= sb.nama %>
+                    </option>
+                    <% } %>
+                  </select>
+                  <% if (suaraBelList.length === 0) { %>
+                  <div class="form-text text-warning">
+                    <i class="bi bi-exclamation-triangle me-1"></i>
+                    Belum ada suara bel. <a href="/bel/suara">Upload suara bel</a> terlebih dahulu.
+                  </div>
+                  <% } %>
+                </div>
+
+                <div class="col-12">
+                  <label class="form-label fw-semibold">Keterangan</label>
+                  <input type="text" class="form-control" name="keterangan"
+                         value="<%= jadwal ? (jadwal.keterangan || '') : '' %>"
+                         placeholder="Keterangan opsional">
+                </div>
+
+                <div class="col-12">
+                  <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" name="aktif" id="aktifSwitch"
+                           <%= !jadwal || jadwal.aktif ? 'checked' : '' %>>
+                    <label class="form-check-label fw-semibold" for="aktifSwitch">Jadwal Aktif</label>
+                  </div>
+                </div>
+
+                <div class="col-12 pt-2">
+                  <button type="submit" class="btn btn-primary me-2">
+                    <i class="bi bi-save me-1"></i>Simpan Jadwal
+                  </button>
+                  <a href="/bel" class="btn btn-outline-secondary">Batal</a>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function selectHari(hariArr) {
+  document.querySelectorAll('input[name="hari"]').forEach(cb => {
+    cb.checked = hariArr.includes(cb.value);
+  });
+}
+</script>
